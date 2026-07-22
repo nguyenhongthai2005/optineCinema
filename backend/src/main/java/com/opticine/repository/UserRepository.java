@@ -21,14 +21,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("""
             select distinct u from User u join u.roles r
             where r.name = 'ROLE_STAFF'
-            and (cast(:keyword as String) is null or lower(u.fullName) like lower(concat('%', :keyword, '%'))
+            and (coalesce(:keyword, '') = '' or lower(u.fullName) like lower(concat('%', :keyword, '%'))
                 or lower(u.email) like lower(concat('%', :keyword, '%'))
                 or lower(u.phone) like lower(concat('%', :keyword, '%'))
                 or lower(u.username) like lower(concat('%', :keyword, '%'))
                 or lower(r.name) like lower(concat('%', :keyword, '%')))
-            and (cast(:status as String) is null or upper(u.status) = upper(:status))
-            and (cast(:position as String) is null or u.staffPosition = :position)
-            and (cast(:contractType as String) is null or u.employmentType = :contractType)
+            and (coalesce(:status, '') = '' or upper(u.status) = upper(:status))
+            and (coalesce(:position, '') = '' or u.staffPosition = :position)
+            and (coalesce(:contractType, '') = '' or u.employmentType = :contractType)
             order by u.id desc
             """)
     List<User> searchStaff(@Param("keyword") String keyword,

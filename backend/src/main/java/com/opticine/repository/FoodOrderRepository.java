@@ -14,9 +14,9 @@ public interface FoodOrderRepository extends JpaRepository<FoodOrder, Long> {
     @Query("""
             select distinct o from FoodOrder o
             left join o.items i
-            where (cast(:from as timestamp) is null or o.createdAt >= :from)
-            and (cast(:to as timestamp) is null or o.createdAt < :to)
-            and (cast(:keyword as String) is null
+            where (coalesce(cast(:from as String), '') = '' or o.createdAt >= :from)
+            and (coalesce(cast(:to as String), '') = '' or o.createdAt < :to)
+            and (coalesce(:keyword, '') = ''
                 or cast(o.id as String) like concat('%', :keyword, '%')
                 or lower(o.customerName) like lower(concat('%', :keyword, '%'))
                 or lower(o.customerPhone) like lower(concat('%', :keyword, '%'))

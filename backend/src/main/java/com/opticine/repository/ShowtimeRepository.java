@@ -49,7 +49,7 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
     @Query("""
             select s from Showtime s
             where s.room.id = :roomId
-            and (cast(:excludeId as Long) is null or s.id <> :excludeId)
+            and (coalesce(:excludeId, -1L) = -1L or s.id <> :excludeId)
             and upper(s.status) <> 'CANCELLED'
             and s.startTime < :newEnd
             and s.endTime > :newStart
