@@ -16,10 +16,10 @@ import java.util.Optional;
 public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment, Long> {
     @Query("""
             select a from StaffAssignment a
-            where (:date is null or a.workDate = :date)
-            and (:staffId is null or a.staff.id = :staffId)
-            and (:position is null or a.staff.staffPosition = :position)
-            and (:status is null or upper(a.status) = upper(:status))
+            where (cast(:date as date) is null or a.workDate = :date)
+            and (cast(:staffId as long) is null or a.staff.id = :staffId)
+            and (cast(:position as string) is null or a.staff.staffPosition = :position)
+            and (cast(:status as string) is null or upper(a.status) = upper(:status))
             order by a.workDate desc, a.startTime asc
             """)
     List<StaffAssignment> search(@Param("date") LocalDate date,
@@ -46,7 +46,7 @@ public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment
             and upper(a.status) = 'SCHEDULED'
             and a.startTime < :endTime
             and a.endTime > :startTime
-            and (:excludeId is null or a.id <> :excludeId)
+            and (cast(:excludeId as long) is null or a.id <> :excludeId)
             """)
     List<StaffAssignment> findOverlapping(@Param("staffId") Long staffId,
                                           @Param("workDate") LocalDate workDate,

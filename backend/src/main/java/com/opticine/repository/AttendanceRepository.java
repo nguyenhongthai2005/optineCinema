@@ -18,10 +18,10 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     @Query("""
             select a from Attendance a
-            where (:staffId is null or a.staff.id = :staffId)
-            and (:fromDate is null or a.businessDate >= :fromDate)
-            and (:toDate is null or a.businessDate <= :toDate)
-            and (:status is null or upper(a.status) = upper(:status))
+            where (cast(:staffId as long) is null or a.staff.id = :staffId)
+            and (cast(:fromDate as date) is null or a.businessDate >= :fromDate)
+            and (cast(:toDate as date) is null or a.businessDate <= :toDate)
+            and (cast(:status as string) is null or upper(a.status) = upper(:status))
             order by a.businessDate desc, a.id desc
             """)
     List<Attendance> search(
