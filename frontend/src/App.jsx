@@ -26,6 +26,7 @@ import CustomerProfilePage from './pages/CustomerProfilePage'
 
 // Protected Route
 import ProtectedRoute from './components/ProtectedRoute'
+import PublicRoute from './components/PublicRoute'
 
 // Admin
 import AdminLayout from './layouts/AdminLayout'
@@ -63,7 +64,7 @@ function App() {
   return (
     <Routes>
       {/* Public routes */}
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<PublicRoute><Home /></PublicRoute>} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/oauth2/success" element={<OAuth2Success />} />
@@ -71,14 +72,14 @@ function App() {
       <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Booking routes */}
-      <Route path="/booking/success" element={<TicketSuccess />} />
-      <Route path="/test-booking" element={<TestBooking />} />
-      <Route path="/payment-result" element={<PaymentResult />} />
+      <Route path="/booking/success" element={<PublicRoute><TicketSuccess /></PublicRoute>} />
+      <Route path="/test-booking" element={<PublicRoute><TestBooking /></PublicRoute>} />
+      <Route path="/payment-result" element={<PublicRoute><PaymentResult /></PublicRoute>} />
 
       <Route
         path="/payment/vietqr"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute roles={['ROLE_CUSTOMER']}>
             <VietQrPaymentPage />
           </ProtectedRoute>
         }
@@ -87,7 +88,7 @@ function App() {
       <Route
         path="/booking/confirm"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute roles={['ROLE_CUSTOMER']}>
             <BookingConfirmPage />
           </ProtectedRoute>
         }
@@ -96,7 +97,7 @@ function App() {
       <Route
         path="/booking/combos"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute roles={['ROLE_CUSTOMER']}>
             <ComboSelectionPage />
           </ProtectedRoute>
         }
@@ -105,7 +106,7 @@ function App() {
       <Route
         path="/my-bookings"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute roles={['ROLE_CUSTOMER']}>
             <MyBookings />
           </ProtectedRoute>
         }
@@ -121,12 +122,12 @@ function App() {
       />
 
       {/* Showtime routes */}
-      <Route path="/showtimes" element={<ShowtimePage />} />
+      <Route path="/showtimes" element={<PublicRoute><ShowtimePage /></PublicRoute>} />
 
       <Route
         path="/showtimes/:id/seats"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute roles={['ROLE_CUSTOMER']}>
             <SeatMapPage />
           </ProtectedRoute>
         }
