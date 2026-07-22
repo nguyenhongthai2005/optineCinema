@@ -17,9 +17,9 @@ public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment
     @Query("""
             select a from StaffAssignment a
             where (cast(:date as date) is null or a.workDate = :date)
-            and (cast(:staffId as bigint) is null or a.staff.id = :staffId)
-            and (cast(:position as text) is null or a.staff.staffPosition = :position)
-            and (cast(:status as text) is null or upper(a.status) = upper(:status))
+            and (cast(:staffId as Long) is null or a.staff.id = :staffId)
+            and (cast(:position as String) is null or a.staff.staffPosition = :position)
+            and (cast(:status as String) is null or upper(a.status) = upper(:status))
             order by a.workDate desc, a.startTime asc
             """)
     List<StaffAssignment> search(@Param("date") LocalDate date,
@@ -46,7 +46,7 @@ public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment
             and upper(a.status) = 'SCHEDULED'
             and a.startTime < :endTime
             and a.endTime > :startTime
-            and (cast(:excludeId as bigint) is null or a.id <> :excludeId)
+            and (cast(:excludeId as Long) is null or a.id <> :excludeId)
             """)
     List<StaffAssignment> findOverlapping(@Param("staffId") Long staffId,
                                           @Param("workDate") LocalDate workDate,

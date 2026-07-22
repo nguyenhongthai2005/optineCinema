@@ -17,7 +17,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     @Query("""
             select c from Customer c
-            where (cast(:keyword as text) is null or lower(c.fullName) like lower(concat('%', :keyword, '%'))
+            where (cast(:keyword as String) is null or lower(c.fullName) like lower(concat('%', :keyword, '%'))
                 or lower(c.email) like lower(concat('%', :keyword, '%'))
                 or lower(c.phone) like lower(concat('%', :keyword, '%')))
             order by c.id desc

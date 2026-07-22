@@ -59,9 +59,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             left join s.movie m
             where (cast(:from as timestamp) is null or b.createdAt >= :from)
             and (cast(:to as timestamp) is null or b.createdAt < :to)
-            and (cast(:status as text) is null or upper(b.status) = upper(:status))
-            and (cast(:keyword as text) is null
-                or cast(b.id as text) like concat('%', :keyword, '%')
+            and (cast(:status as String) is null or upper(b.status) = upper(:status))
+            and (cast(:keyword as String) is null
+                or cast(b.id as String) like concat('%', :keyword, '%')
                 or lower(c.fullName) like lower(concat('%', :keyword, '%'))
                 or lower(c.phone) like lower(concat('%', :keyword, '%'))
                 or lower(c.email) like lower(concat('%', :keyword, '%'))
