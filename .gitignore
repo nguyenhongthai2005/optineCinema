@@ -1,0 +1,38 @@
+# ─── Node / Frontend ───────────────────────────────────────────
+node_modules/
+dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+.env
+.env.local
+.env.*.local
+
+# ─── Java / Backend ────────────────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+*.ear
+backend/run-local.ps1
+application-local.yml
+application-secret.yml
+
+# ─── IDE ───────────────────────────────────────────────────────
+.idea/
+*.iml
+*.iws
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ─── OS ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Logs ──────────────────────────────────────────────────────
+*.log
+logs/

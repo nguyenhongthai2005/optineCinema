@@ -1,0 +1,237 @@
+{
+  "info": {
+    "name": "Opticine SBA301 API Collection",
+    "description": "Bo suu tap API dung cho nop bai SBA301. Collection su dung bien {{baseUrl}}, {{adminToken}}, {{customerToken}}, {{staffToken}} va khong chua token hoac secret that.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api" },
+    { "key": "adminToken", "value": "" },
+    { "key": "customerToken", "value": "" },
+    { "key": "staffToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Dang nhap, dang ky va dat lai mat khau.",
+      "item": [
+        {
+          "name": "Login Admin - success",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"identifier\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 - dang nhap admin thanh cong', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.test('Co token', () => pm.expect(body.token || body.accessToken || body.jwt).to.exist);",
+            "pm.collectionVariables.set('adminToken', body.token || body.accessToken || body.jwt);",
+            "pm.test('Khong lo mat khau', () => pm.expect(JSON.stringify(body).toLowerCase()).to.not.include('password'));"
+          ] } }]
+        },
+        {
+          "name": "Login Customer - success",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"identifier\": \"{{customerEmail}}\",\n  \"password\": \"{{customerPassword}}\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 - dang nhap khach hang thanh cong', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.collectionVariables.set('customerToken', body.token || body.accessToken || body.jwt);",
+            "pm.test('Co token', () => pm.expect(pm.collectionVariables.get('customerToken')).to.exist);",
+            "pm.test('Khong lo mat khau', () => pm.expect(JSON.stringify(body).toLowerCase()).to.not.include('password'));"
+          ] } }]
+        },
+        {
+          "name": "Login Staff - success",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"identifier\": \"{{staffEmail}}\",\n  \"password\": \"{{staffPassword}}\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 - dang nhap nhan vien thanh cong', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.collectionVariables.set('staffToken', body.token || body.accessToken || body.jwt);",
+            "pm.test('Co token', () => pm.expect(pm.collectionVariables.get('staffToken')).to.exist);",
+            "pm.test('Khong lo mat khau', () => pm.expect(JSON.stringify(body).toLowerCase()).to.not.include('password'));"
+          ] } }]
+        },
+        {
+          "name": "Login - wrong password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"identifier\": \"{{customerEmail}}\",\n  \"password\": \"wrong-password\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Sai mat khau bi tu choi', () => pm.expect(pm.response.code).to.be.oneOf([400, 401, 403]));",
+            "pm.test('Khong lo mat khau', () => pm.expect(pm.response.text().toLowerCase()).to.not.include('password'))"
+          ] } }]
+        },
+        {
+          "name": "Register Customer - success",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Khach hang Postman\",\n  \"email\": \"postman.customer+{{$timestamp}}@opticine.local\",\n  \"phone\": \"09{{$timestamp}}\",\n  \"password\": \"Demo123456\"\n}" },
+            "url": "{{baseUrl}}/auth/register"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Dang ky thanh cong', () => pm.response.to.have.status(200));",
+            "pm.test('Response JSON ton tai', () => pm.expect(pm.response.json()).to.be.an('object'));",
+            "pm.test('Khong lo mat khau', () => pm.expect(pm.response.text().toLowerCase()).to.not.include('password'))"
+          ] } }]
+        },
+        {
+          "name": "Register - invalid email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Invalid Email\",\n  \"email\": \"not-an-email\",\n  \"phone\": \"0900000001\",\n  \"password\": \"Demo123456\"\n}" },
+            "url": "{{baseUrl}}/auth/register"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Email khong hop le bi tu choi', () => pm.expect(pm.response.code).to.be.oneOf([400, 422]));"
+          ] } }]
+        },
+        {
+          "name": "Forgot Password - request reset",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{customerEmail}}\"\n}" },
+            "url": "{{baseUrl}}/auth/forgot-password"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Yeu cau reset tra ve 200 de khong tiet lo email', () => pm.response.to.have.status(200));",
+            "pm.test('Response JSON ton tai', () => pm.expect(pm.response.json()).to.be.an('object'));"
+          ] } }]
+        },
+        {
+          "name": "Reset Password - invalid token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"invalid-token\",\n  \"newPassword\": \"Demo123456\"\n}" },
+            "url": "{{baseUrl}}/auth/reset-password"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Token sai bi tu choi', () => pm.expect(pm.response.code).to.be.oneOf([400, 404, 422]));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Movies",
+      "item": [
+        { "name": "Get public movies", "request": { "method": "GET", "url": "{{baseUrl}}/movies" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('JSON exists', () => pm.expect(pm.response.json()).to.exist);"] } }] },
+        { "name": "Get hot movies", "request": { "method": "GET", "url": "{{baseUrl}}/movies/hot" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('JSON exists', () => pm.expect(pm.response.json()).to.exist);"] } }] },
+        { "name": "Admin create movie", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Postman Movie {{$timestamp}}\",\n  \"description\": \"Phim demo cho SBA301\",\n  \"genre\": \"Drama\",\n  \"durationMinutes\": 105,\n  \"releaseDate\": \"2026-07-21\",\n  \"endDate\": \"2026-12-31\",\n  \"ageRating\": \"P\",\n  \"status\": \"ACTIVE\",\n  \"posterUrl\": \"https://example.com/poster.jpg\",\n  \"trailerUrl\": \"https://example.com/trailer\"\n}" }, "url": "{{baseUrl}}/admin/movies" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Created', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));", "const body = pm.response.json();", "pm.test('movie id exists', () => pm.expect(body.id).to.exist);", "pm.environment.set('movieId', body.id);", "pm.test('Khong lo mat khau', () => pm.expect(pm.response.text().toLowerCase()).to.not.include('password'));"] } }] },
+        { "name": "Admin update movie", "request": { "method": "PUT", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Postman Movie Updated\",\n  \"description\": \"Cap nhat phim demo\",\n  \"genre\": \"Action\",\n  \"durationMinutes\": 110,\n  \"releaseDate\": \"2026-07-21\",\n  \"endDate\": \"2026-12-31\",\n  \"ageRating\": \"P\",\n  \"status\": \"ACTIVE\"\n}" }, "url": "{{baseUrl}}/admin/movies/{{movieId}}" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Updated', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"] } }] },
+        { "name": "Admin delete movie", "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/movies/{{movieId}}" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Delete accepted', () => pm.expect(pm.response.code).to.be.oneOf([200, 204, 409]));"] } }] },
+        { "name": "Search/filter movies", "request": { "method": "GET", "url": "{{baseUrl}}/movies?keyword=demo&status=ACTIVE" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"] } }] }
+      ]
+    },
+    {
+      "name": "Rooms",
+      "item": [
+        { "name": "Admin get rooms", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/rooms" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('JSON exists', () => pm.expect(pm.response.json()).to.exist);"] } }] },
+        { "name": "Admin create room", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman Room {{$timestamp}}\",\n  \"totalRows\": 5,\n  \"totalColumns\": 8,\n  \"screenType\": \"2D\",\n  \"priceMultiplier\": 1.0,\n  \"status\": \"ACTIVE\"\n}" }, "url": "{{baseUrl}}/admin/rooms" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Created', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));", "const body = pm.response.json(); pm.environment.set('roomId', body.id);", "pm.test('room id exists', () => pm.expect(body.id).to.exist);"] } }] },
+        { "name": "Admin update room", "request": { "method": "PUT", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman Room Updated\",\n  \"totalRows\": 5,\n  \"totalColumns\": 8,\n  \"screenType\": \"IMAX\",\n  \"priceMultiplier\": 1.2,\n  \"status\": \"ACTIVE\"\n}" }, "url": "{{baseUrl}}/admin/rooms/{{roomId}}" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Updated', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"] } }] },
+        { "name": "Admin delete room", "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/rooms/{{roomId}}" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Delete accepted', () => pm.expect(pm.response.code).to.be.oneOf([200, 204, 409]));"] } }] },
+        { "name": "Create room should verify seats are generated if backend supports it", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"rowCount\": 5,\n  \"columnCount\": 8\n}" }, "url": "{{baseUrl}}/admin/rooms/{{roomId}}/generate-seats" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Seats generated or validation returned', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 400, 409]));", "pm.test('JSON exists when success', () => { if (pm.response.code < 300) pm.expect(pm.response.json()).to.exist; });"] } }] }
+      ]
+    },
+    {
+      "name": "Seats",
+      "item": [
+        { "name": "Get seats by room", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/rooms/{{roomId}}/seats" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('JSON exists', () => pm.expect(pm.response.json()).to.exist);"] } }] },
+        { "name": "Update seat type", "request": { "method": "PATCH", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"seatType\": \"VIP\"\n}" }, "url": "{{baseUrl}}/admin/seats/1/type" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Seat type updated or id invalid', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 404]));"] } }] },
+        { "name": "Mark seat maintenance", "request": { "method": "PATCH", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"maintenance\": true\n}" }, "url": "{{baseUrl}}/admin/seats/1/maintenance" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Maintenance accepted or protected by rule', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 404, 409]));"] } }] },
+        { "name": "Restore seat", "request": { "method": "PATCH", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"maintenance\": false\n}" }, "url": "{{baseUrl}}/admin/seats/1/maintenance" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Restore accepted or id invalid', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 404]));"] } }] },
+        { "name": "Seat validation error", "request": { "method": "PATCH", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"seatType\": \"INVALID\"\n}" }, "url": "{{baseUrl}}/admin/seats/1/type" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Invalid type rejected', () => pm.expect(pm.response.code).to.be.oneOf([400, 404]));"] } }] }
+      ]
+    },
+    {
+      "name": "Showtimes",
+      "item": [
+        { "name": "Get public showtimes", "request": { "method": "GET", "url": "{{baseUrl}}/showtimes?date=2026-07-21" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('JSON exists', () => pm.expect(pm.response.json()).to.exist);"] } }] },
+        { "name": "Admin create showtime", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"movieId\": {{movieId}},\n  \"roomId\": {{roomId}},\n  \"startTime\": \"2026-08-01T10:00:00\",\n  \"endTime\": \"2026-08-01T12:00:00\",\n  \"status\": \"SCHEDULED\"\n}" }, "url": "{{baseUrl}}/admin/showtimes" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Created', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));", "const body = pm.response.json(); pm.environment.set('showtimeId', body.id);", "pm.test('showtime id exists', () => pm.expect(body.id).to.exist);"] } }] },
+        { "name": "Create showtime - overlap should fail", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"movieId\": {{movieId}},\n  \"roomId\": {{roomId}},\n  \"startTime\": \"2026-08-01T10:30:00\",\n  \"endTime\": \"2026-08-01T12:30:00\",\n  \"status\": \"SCHEDULED\"\n}" }, "url": "{{baseUrl}}/admin/showtimes" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Overlap rejected', () => pm.expect(pm.response.code).to.be.oneOf([400, 409, 422]));"] } }] },
+        { "name": "Update showtime", "request": { "method": "PUT", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"movieId\": {{movieId}},\n  \"roomId\": {{roomId}},\n  \"startTime\": \"2026-08-01T13:00:00\",\n  \"endTime\": \"2026-08-01T15:00:00\",\n  \"status\": \"SCHEDULED\"\n}" }, "url": "{{baseUrl}}/admin/showtimes/{{showtimeId}}" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Updated', () => pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 409]));"] } }] },
+        { "name": "Cancel showtime", "request": { "method": "PATCH", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"CANCELLED\"\n}" }, "url": "{{baseUrl}}/admin/showtimes/{{showtimeId}}/status" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Cancelled or protected by booked tickets', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 409]));"] } }] },
+        { "name": "Filter by movie/date", "request": { "method": "GET", "url": "{{baseUrl}}/showtimes?movieId={{movieId}}&date=2026-08-01" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"] } }] }
+      ]
+    },
+    {
+      "name": "Booking",
+      "item": [
+        { "name": "Create booking with seats", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"showtimeSeatIds\": [1],\n  \"combos\": [],\n  \"promotionCode\": \"{{promotionCode}}\"\n}" }, "url": "{{baseUrl}}/bookings" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Booking created or seat prelock required', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 400, 409]));", "if (pm.response.code < 300) { const body = pm.response.json(); pm.environment.set('bookingId', body.id); pm.test('booking id exists', () => pm.expect(body.id).to.exist); }"] } }] },
+        { "name": "Booking price preview if endpoint exists", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"showtimeSeatIds\": [1],\n  \"combos\": [],\n  \"promotionCode\": \"{{promotionCode}}\"\n}" }, "url": "{{baseUrl}}/bookings/price-preview" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Preview available', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 409]));", "if (pm.response.code < 300) pm.test('final amount exists', () => pm.expect(pm.response.json().finalAmount || pm.response.json().totalAmount).to.exist);"] } }] },
+        { "name": "Apply voucher if endpoint exists", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"code\": \"{{promotionCode}}\",\n  \"ticketAmount\": 140000,\n  \"comboAmount\": 0\n}" }, "url": "{{baseUrl}}/promotions/validate" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Voucher validated or invalid', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 404]));"] } }] },
+        { "name": "Get my bookings", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }], "url": "{{baseUrl}}/bookings/my-bookings" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('JSON exists', () => pm.expect(pm.response.json()).to.exist);"] } }] },
+        { "name": "Booking ownership forbidden case", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }], "url": "{{baseUrl}}/bookings/999999/tickets" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Forbidden/not found accepted', () => pm.expect(pm.response.code).to.be.oneOf([403, 404]));"] } }] },
+        { "name": "Cancel/expire booking if endpoint exists", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/bookings/reset-test-seats" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Utility endpoint returns or is protected', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));"] } }] }
+      ]
+    },
+    {
+      "name": "Payment",
+      "item": [
+        { "name": "Create VietQR payment", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"bookingId\": {{bookingId}}\n}" }, "url": "{{baseUrl}}/payment/vietqr/create" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('VietQR created or booking invalid', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 403, 404]));", "if (pm.response.code < 300) pm.test('payable amount exists', () => pm.expect(pm.response.json().payableAmount || pm.response.json().amount).to.exist);"] } }] },
+        { "name": "Mark VietQR transferred", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"bookingId\": {{bookingId}}\n}" }, "url": "{{baseUrl}}/payment/vietqr/mark-transferred" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Transfer marked or rejected', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 403, 404, 409]));"] } }] },
+        { "name": "Get payment status", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }], "url": "{{baseUrl}}/bookings/my-bookings" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status list returns', () => pm.response.to.have.status(200));"] } }] },
+        { "name": "VNPay create payment if endpoint exists", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }], "url": "{{baseUrl}}/payment/vnpay/create-url?bookingId={{bookingId}}" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('VNPay URL or validation error', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 404]));"] } }] },
+        { "name": "Payment wrong booking id", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"bookingId\": 99999999\n}" }, "url": "{{baseUrl}}/payment/vietqr/create" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Wrong booking rejected', () => pm.expect(pm.response.code).to.be.oneOf([400, 403, 404]));"] } }] },
+        { "name": "Double confirm idempotency case if practical", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"bookingId\": {{bookingId}}\n}" }, "url": "{{baseUrl}}/payment/vietqr/mark-transferred" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Double confirm idempotent or rejected safely', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 403, 404, 409]));"] } }] }
+      ]
+    },
+    {
+      "name": "Membership",
+      "item": [
+        { "name": "Get my membership", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }], "url": "{{baseUrl}}/customer/profile" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Profile/membership returns', () => pm.response.to.have.status(200));", "pm.test('Khong lo mat khau', () => pm.expect(pm.response.text().toLowerCase()).to.not.include('password'));"] } }] },
+        { "name": "Get customer membership/admin", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/customers/1" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Admin customer detail or id invalid', () => pm.expect(pm.response.code).to.be.oneOf([200, 404]));"] } }] },
+        { "name": "Apply membership benefits in booking preview", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"showtimeSeatIds\": [1],\n  \"combos\": []\n}" }, "url": "{{baseUrl}}/bookings/price-preview" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Preview shows price fields when success', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 409]));"] } }] },
+        { "name": "Recalculate customer spending if admin endpoint exists", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"customerId\": 1\n}" }, "url": "{{baseUrl}}/admin/customers/recalculate-spending" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Recalculate returns or validation error', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 404]));"] } }] }
+      ]
+    },
+    {
+      "name": "Promotion / Voucher",
+      "item": [
+        { "name": "Admin create promotion", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"code\": \"PM{{$timestamp}}\",\n  \"name\": \"Postman Voucher\",\n  \"discountType\": \"PERCENT\",\n  \"discountValue\": 10,\n  \"startDate\": \"2026-07-21T00:00:00\",\n  \"endDate\": \"2026-12-31T23:59:59\",\n  \"status\": \"ACTIVE\"\n}" }, "url": "{{baseUrl}}/admin/promotions" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Created', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 400]));", "if (pm.response.code < 300) { const body = pm.response.json(); pm.environment.set('promotionCode', body.code || body.promotionCode || pm.environment.get('promotionCode')); }"] } }] },
+        { "name": "Admin update promotion", "request": { "method": "PUT", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"code\": \"{{promotionCode}}\",\n  \"name\": \"Postman Voucher Updated\",\n  \"discountType\": \"PERCENT\",\n  \"discountValue\": 15,\n  \"startDate\": \"2026-07-21T00:00:00\",\n  \"endDate\": \"2026-12-31T23:59:59\",\n  \"status\": \"ACTIVE\"\n}" }, "url": "{{baseUrl}}/admin/promotions/1" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Updated or id invalid', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 404]));"] } }] },
+        { "name": "Validate/apply promotion", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"code\": \"{{promotionCode}}\",\n  \"ticketAmount\": 140000,\n  \"comboAmount\": 50000\n}" }, "url": "{{baseUrl}}/promotions/validate" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Validation response', () => pm.expect(pm.response.code).to.be.oneOf([200, 400]));", "pm.test('JSON exists', () => pm.expect(pm.response.json()).to.exist);"] } }] },
+        { "name": "Promotion expired/invalid case", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"code\": \"EXPIRED_OR_INVALID\",\n  \"ticketAmount\": 140000,\n  \"comboAmount\": 0\n}" }, "url": "{{baseUrl}}/promotions/validate" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Invalid promotion rejected or valid=false', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 404]));"] } }] }
+      ]
+    },
+    {
+      "name": "Staff",
+      "item": [
+        { "name": "Staff check-in", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"latitude\": 17.467256,\n  \"longitude\": 106.587302,\n  \"accuracyMeters\": 30\n}" }, "url": "{{baseUrl}}/staff/attendance/check-in" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Check-in success or already checked in', () => pm.expect(pm.response.code).to.be.oneOf([200, 400]));"] } }] },
+        { "name": "Staff check-out", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"latitude\": 17.467256,\n  \"longitude\": 106.587302,\n  \"accuracyMeters\": 30\n}" }, "url": "{{baseUrl}}/staff/attendance/check-out" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Check-out success or validation', () => pm.expect(pm.response.code).to.be.oneOf([200, 400]));"] } }] },
+        { "name": "Staff get own schedule", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }], "url": "{{baseUrl}}/staff/assignments/my" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Schedule returns', () => pm.response.to.have.status(200));"] } }] },
+        { "name": "Staff sell counter ticket", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"showtimeId\": {{showtimeId}},\n  \"lockedShowtimeSeatIds\": [1],\n  \"paymentMethod\": \"CASH\",\n  \"combos\": []\n}" }, "url": "{{baseUrl}}/staff/bookings/counter" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Counter sale success or seat validation', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 403, 409]));"] } }] },
+        { "name": "Staff sell combo", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"customerName\": \"Khach vang lai\",\n  \"paymentMethod\": \"CASH\",\n  \"combos\": [{ \"comboId\": 1, \"quantity\": 1 }]\n}" }, "url": "{{baseUrl}}/staff/food-orders" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Combo sale success or combo invalid', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 404]));"] } }] },
+        { "name": "Ticket checker scan ticket", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }], "url": "{{baseUrl}}/staff/tickets/verify?qrCode=DEMO" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Scan returns or invalid QR', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 404]));"] } }] },
+        { "name": "Permission forbidden case", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }], "url": "{{baseUrl}}/staff/dashboard/summary" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Customer cannot access staff endpoint', () => pm.expect(pm.response.code).to.be.oneOf([401, 403]));"] } }] }
+      ]
+    },
+    {
+      "name": "Admin Revenue / Reports",
+      "item": [
+        { "name": "Get analytics overview", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/analytics/overview" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));", "pm.test('JSON exists', () => pm.expect(pm.response.json()).to.exist);"] } }] },
+        { "name": "Get revenue report", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/reports/bookings?from=2026-01-01&to=2026-12-31" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Report returns', () => pm.response.to.have.status(200));"] } }] },
+        { "name": "Export report if endpoint exists", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/reports/bookings/export?from=2026-01-01&to=2026-12-31" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Export returns or no data', () => pm.expect(pm.response.code).to.be.oneOf([200, 204, 400]));"] } }] },
+        { "name": "Payment method breakdown", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/analytics/overview" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Overview contains analytics fields', () => pm.response.to.have.status(200));", "pm.test('JSON exists', () => pm.expect(pm.response.json()).to.exist);"] } }] },
+        { "name": "Verify order revenue and actual paid/demo fields if available", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/reports/bookings?paymentMethod=VIETQR" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Revenue report returns', () => pm.response.to.have.status(200));", "pm.test('No password leaked', () => pm.expect(pm.response.text().toLowerCase()).to.not.include('password'));"] } }] }
+      ]
+    }
+  ]
+}

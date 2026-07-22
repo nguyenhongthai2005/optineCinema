@@ -1,0 +1,105 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: opticine-booking
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:google-client-id-not-configured}
+            client-secret: ${GOOGLE_CLIENT_SECRET:google-client-secret-not-configured}
+            scope:
+              - openid
+              - profile
+              - email
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/opticine_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: false
+    baseline-on-migrate: true
+    clean-disabled: false
+    clean-on-validation-error: true
+    locations: classpath:db/migration
+
+logging:
+  level:
+    com.opticine: DEBUG
+    org.springframework.security: INFO
+
+vnpay:
+  tmn-code: "NL605E75"
+  hash-secret: "51990KRI7QF7TCHA2O1MZD1NH4XDD6EY"
+  url: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+  return-url: ${VNPAY_RETURN_URL:http://localhost:8080/api/payment/vnpay/return}
+  api-url: "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction"
+  version: "2.1.0"
+  command: "pay"
+
+app:
+  frontend-url: ${APP_FRONTEND_URL:${FRONTEND_URL:http://localhost:5173}}
+  mail-from: ${MAIL_FROM:${MAIL_USERNAME:no-reply@opticine.local}}
+  timezone: ${APP_TIMEZONE:Asia/Ho_Chi_Minh}
+  booking:
+    close-before-showtime-minutes: ${BOOKING_CLOSE_BEFORE_SHOWTIME_MINUTES:0}
+  showtime:
+    cleaning-buffer-minutes: ${SHOWTIME_CLEANING_BUFFER_MINUTES:15}
+  ticket:
+    checkin-open-before-minutes: ${TICKET_CHECKIN_OPEN_BEFORE_MINUTES:10}
+    checkin-close-after-minutes: ${TICKET_CHECKIN_CLOSE_AFTER_MINUTES:30}
+  attendance:
+    location-check-enabled: ${ATTENDANCE_LOCATION_CHECK_ENABLED:true}
+    default-location-name: ${ATTENDANCE_LOCATION_NAME:Opticine Cinema}
+    center-latitude: ${ATTENDANCE_LATITUDE:17.467256}
+    center-longitude: ${ATTENDANCE_LONGITUDE:106.587302}
+    radius-meters: ${ATTENDANCE_RADIUS_METERS:10000}
+    max-accuracy-meters: ${ATTENDANCE_MAX_ACCURACY_METERS:100}
+    strict-accuracy-check: ${ATTENDANCE_STRICT_ACCURACY_CHECK:false}
+    early-checkin-minutes: ${ATTENDANCE_EARLY_CHECKIN_MINUTES:15}
+    late-grace-minutes: ${ATTENDANCE_LATE_GRACE_MINUTES:5}
+  payment:
+    vietqr:
+      enabled: ${VIETQR_ENABLED:true}
+      auto-confirm-enabled: ${VIETQR_AUTO_CONFIRM_ENABLED:true}
+      demo-amount-enabled: ${VIETQR_DEMO_AMOUNT_ENABLED:true}
+      demo-amount-rate: ${VIETQR_DEMO_AMOUNT_RATE:0.1}
+      demo-round-to: ${VIETQR_DEMO_ROUND_TO:1000}
+      demo-min-amount: ${VIETQR_DEMO_MIN_AMOUNT:1000}
+      bank-id: ${VIETQR_BANK_ID:MB}
+      account-no: ${VIETQR_ACCOUNT_NO:}
+      account-name: ${VIETQR_ACCOUNT_NAME:}
+      template: ${VIETQR_TEMPLATE:compact2}
+
+demo:
+  staff-password: ${DEMO_STAFF_PASSWORD:123456}
