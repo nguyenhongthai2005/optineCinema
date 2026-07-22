@@ -287,6 +287,7 @@ public class PaymentController {
     // VNPay Return URL (User redirect ve Frontend)
     // ==========================================
     @GetMapping("/return")
+    @Transactional
     public ResponseEntity<?> paymentReturn(HttpServletRequest request) {
         try {
             Map<String, String> fields = extractVnpayFields(request);
@@ -327,6 +328,7 @@ public class PaymentController {
     // VNPay IPN (Server-to-Server callback)
     // ==========================================
     @GetMapping("/ipn")
+    @Transactional
     public ResponseEntity<?> paymentIpn(HttpServletRequest request) {
         Map<String, String> result = new HashMap<>();
         try {
