@@ -16,8 +16,8 @@ public interface FoodOrderRepository extends JpaRepository<FoodOrder, Long> {
             left join o.items i
             where (cast(:from as timestamp) is null or o.createdAt >= :from)
             and (cast(:to as timestamp) is null or o.createdAt < :to)
-            and (cast(:keyword as string) is null
-                or cast(o.id as string) like concat('%', :keyword, '%')
+            and (cast(:keyword as text) is null
+                or cast(o.id as text) like concat('%', :keyword, '%')
                 or lower(o.customerName) like lower(concat('%', :keyword, '%'))
                 or lower(o.customerPhone) like lower(concat('%', :keyword, '%'))
                 or lower(i.comboNameSnapshot) like lower(concat('%', :keyword, '%')))
