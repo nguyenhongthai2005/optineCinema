@@ -1,0 +1,112 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset="utf-8">
+    <title>Kịch Bản Thuyết Trình Đồ Án: Optine Cinema</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; padding: 20px; }
+        h1 { color: #2c3e50; text-align: center; font-size: 24pt; border-bottom: 2px solid #34495e; padding-bottom: 10px; }
+        h2 { color: #2980b9; font-size: 18pt; margin-top: 30px; border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; }
+        h3 { color: #c0392b; font-size: 14pt; margin-top: 20px; }
+        p { font-size: 12pt; margin-bottom: 10px; }
+        ul { font-size: 12pt; margin-bottom: 15px; }
+        li { margin-bottom: 8px; }
+        .alert { background-color: #f8f9fa; border-left: 4px solid #f39c12; padding: 10px; margin: 15px 0; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1>Kịch Bản Thuyết Trình Đồ Án: Optine Cinema</h1>
+    <p>Tài liệu này cung cấp kịch bản chi tiết để bạn demo trơn tru 3 luồng chức năng chính: Authentication, Booking & Thanh toán, và Vé điện tử. Kịch bản tập trung vào việc show ra các "Edge Cases" (tình huống ngoại lệ) đã xử lý để ghi điểm tối đa với hội đồng bảo vệ.</p>
+
+    <div class="alert">
+        <strong>Mẹo chuẩn bị trước khi lên bệ:</strong><br/>
+        - Mở sẵn 2 trình duyệt khác nhau (ví dụ: Chrome và Edge) hoặc 1 tab thường + 1 tab ẩn danh để demo tính năng giữ ghế realtime (tránh trùng ghế).<br/>
+        - Đảm bảo đã có sẵn một tài khoản test và chuẩn bị app mã QR ngân hàng (hoặc app VNPAY test) trên điện thoại.
+    </div>
+
+    <h2>PHẦN 1: Luồng Authentication (Đăng ký / Đăng nhập)</h2>
+    <p><em>Mục tiêu: Cho thấy hệ thống có bảo mật, validate chặt chẽ và tiện lợi.</em></p>
+    <h3>1. Happy Path (Luồng chuẩn)</h3>
+    <ul>
+        <li>Bấm vào nút Đăng ký, nhập thông tin hợp lệ và tạo tài khoản.</li>
+        <li>Đăng nhập bằng tài khoản vừa tạo.</li>
+    </ul>
+    <h3>2. Edge Cases (Ăn điểm)</h3>
+    <ul>
+        <li><strong>Validate Form:</strong> Bấm submit khi bỏ trống form hoặc nhập sai định dạng email, mật khẩu quá ngắn &rarr; <em>Hiển thị thông báo lỗi rõ ràng trực tiếp trên giao diện.</em></li>
+        <li><strong>Trùng lặp dữ liệu:</strong> Cố tình đăng ký một tài khoản với Email đã tồn tại trong database &rarr; <em>Hệ thống báo lỗi "Email đã được sử dụng".</em></li>
+        <li><strong>Phân quyền bảo mật (JWT):</strong> Copy URL của trang Admin và dán vào tab trình duyệt đang đăng nhập bằng tài khoản Khách hàng (Customer) &rarr; <em>Hệ thống chặn lại và văng ra lỗi 403 Forbidden.</em></li>
+    </ul>
+
+    <h2>PHẦN 2: Luồng Booking (Đặt vé & Giữ ghế)</h2>
+    <p><em>Mục tiêu: Trình diễn tính năng cốt lõi, nhấn mạnh cơ chế chống xung đột khi nhiều người cùng đặt 1 ghế.</em></p>
+    <h3>1. Happy Path</h3>
+    <ul>
+        <li>Chọn Phim &rarr; Chọn Suất chiếu &rarr; Vào trang sơ đồ ghế.</li>
+        <li>Chọn 2 ghế liền kề &rarr; Chuyển sang bước chọn Bắp nước &rarr; Sang trang Thanh toán.</li>
+    </ul>
+    <h3>2. Edge Cases (Ăn điểm - BẮT BUỘC DEMO)</h3>
+    <ul>
+        <li><strong>Bảo vệ ghế (Concurrency Control):</strong>
+            <ul>
+                <li>Mở <strong>Trình duyệt A (User 1)</strong>, vào chọn Ghế A1, A2. Cố tình dừng lại ở bước chọn bắp nước, không thanh toán.</li>
+                <li>Mở <strong>Trình duyệt B (User 2)</strong>, vào đúng suất chiếu đó. Màn hình của User 2 sẽ hiển thị ngay lập tức (nhờ WebSocket) là Ghế A1, A2 đang có màu vàng/cam.</li>
+                <li>User 2 cố tình click vào ghế A1 &rarr; <em>Hệ thống hiện thông báo "Ghế đang được người khác giữ" và không cho chọn.</em></li>
+            </ul>
+        </li>
+        <li><strong>Đổi ý nhả ghế:</strong> Trở lại <strong>Trình duyệt A</strong>, bấm nút Quay lại (&lt;) để bỏ chọn ghế A1, A2. Qua <strong>Trình duyệt B</strong> xem &rarr; <em>Ghế tự động chuyển sang màu trắng (Available) ngay lập tức mà không cần F5 (Realtime).</em></li>
+        <li><strong>Giới hạn số lượng:</strong> Thử click chọn quá số lượng vé tối đa quy định trong 1 đơn &rarr; <em>Báo lỗi không cho chọn thêm.</em></li>
+    </ul>
+
+    <h2>PHẦN 3: Thanh Toán & Xử Lý Ngoại Lệ</h2>
+    <p><em>Mục tiêu: Luồng phức tạp nhất. Chứng minh hệ thống xử lý dòng tiền an toàn và không bị treo ghế.</em></p>
+    <h3>1. Happy Path</h3>
+    <ul>
+        <li>Tiến hành thanh toán VNPAY/VietQR. Quét mã thành công &rarr; Trả về trang "Thanh toán thành công" (Payment Success).</li>
+    </ul>
+    <h3>2. Edge Cases (Ăn điểm - ĐIỂM NHẤN CỦA BÀI)</h3>
+    <div class="alert">
+        <strong>Quan trọng:</strong> Đây chính là phần chúng ta vừa tập trung fix lỗi đếm ngược 2 phút. Hãy trình bày thật tự tin phần này!
+    </div>
+    <ul>
+        <li><strong>Huỷ thanh toán giữa chừng (User hủy):</strong>
+            <ul>
+                <li>Đặt vé đến trang VNPAY. Sau đó đóng tab VNPAY hoặc bấm "Quay lại".</li>
+                <li>Vào mục "Lịch sử đặt vé" (My Bookings). Đơn hàng đang ở trạng thái <strong>Chờ thanh toán (PENDING)</strong>.</li>
+                <li>Sẽ có bộ đếm ngược thời gian (Countdown: 01:59). Giải thích: <em>"Hệ thống cho khách hàng đúng 2 phút để thanh toán, chống tình trạng giữ ghế ảo phá hoại rạp".</em></li>
+                <li>Demo nút <strong>Hủy đơn hàng</strong>: Bấm hủy &rarr; Đơn hàng chuyển sang "Đã hủy" (CANCELLED), đồng thời qua Trình duyệt B xem &rarr; <em>Ghế lập tức chuyển sang trạng thái trống (Available)</em>.</li>
+            </ul>
+        </li>
+        <li><strong>Tính năng Retry Payment (Thanh toán lại):</strong>
+            <ul>
+                <li>Tạo 1 đơn mới, lại quay về trang Lịch sử.</li>
+                <li>Bấm nút <strong>"Tiếp tục thanh toán"</strong> (khi vẫn còn thời gian đếm ngược) &rarr; Hệ thống tự động khóa lại ghế (re-lock) và tạo link VNPAY mới cho người dùng thanh toán tiếp.</li>
+            </ul>
+        </li>
+        <li><strong>Hết thời gian thanh toán (Timeout 2 phút):</strong>
+            <ul>
+                <li>Tạo 1 đơn mới. Lần này mở trang Lịch sử lên và <strong>đứng chờ luôn 2 phút</strong>.</li>
+                <li>Giải thích với hội đồng: <em>"Hệ thống của em có một background worker chạy ngầm liên tục kiểm tra"</em>.</li>
+                <li>Vừa hết 2 phút &rarr; Đơn hàng tự động bị hủy (CANCELLED). Nút "Tiếp tục thanh toán" biến mất. Sang Trình duyệt B xem &rarr; Ghế đã được nhả ra cho người khác.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>PHẦN 4: Vé điện tử (E-Ticket)</h2>
+    <p><em>Mục tiêu: Tính tiện dụng và khép kín quy trình.</em></p>
+    <h3>1. Happy Path</h3>
+    <ul>
+        <li>Sau khi thanh toán thành công, hiển thị trang Chi tiết vé với mã QR Code.</li>
+        <li>Vào Lịch sử đặt vé, mở xem E-Ticket trực tiếp.</li>
+    </ul>
+    <h3>2. Edge Cases (Ăn điểm)</h3>
+    <ul>
+        <li><strong>Gửi Email Vé điện tử:</strong> Thể hiện hệ thống tự động bắn một email chứa Vé điện tử về email của khách hàng. (Mở Hộp thư đến Gmail để show cho hội đồng xem).</li>
+        <li><strong>Security Mã QR:</strong> Nhấn mạnh rằng mã QR được tạo từ một chuỗi ngẫu nhiên duy nhất (UUID chống làm giả) kết hợp với thư viện Google ZXing và React tự render mã độc lập.</li>
+        <li><strong>Bảo mật truy cập lịch sử:</strong> Thử copy URL xem chi tiết đơn hàng của Account A, đăng nhập Account B và paste URL đó vào &rarr; <em>Hệ thống báo lỗi 403 Forbidden, không cho phép xem lịch sử mua vé của người khác.</em></li>
+    </ul>
+
+    <br/>
+    <h2>💡 Tổng kết khi kết thúc phần Demo</h2>
+    <p><em>"Như thầy cô đã thấy, thay vì chỉ làm luồng mua vé thông thường, nhóm chúng em đã tập trung giải quyết bài toán khó nhất của một hệ thống bán vé: <strong>Xung đột tài nguyên (Concurrency) và Giữ chỗ ảo</strong>. Với việc kết hợp WebSocket (Realtime) và Job Scheduler (Worker chạy ngầm), hệ thống đảm bảo ghế luôn được luân chuyển tối ưu trong 2 phút, không bao giờ xảy ra tình trạng kẹt ghế hay thất thoát doanh thu của rạp."</em></p>
+</body>
+</html>
