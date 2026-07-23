@@ -18,7 +18,7 @@ export default function MyBookings() {
 
   // Countdown timer - refresh mỗi giây
   useEffect(() => {
-    const hasExpiring = bookings.some(b => b.paymentStatus === 'FAILED' && b.expiredAt)
+    const hasExpiring = bookings.some(b => (b.paymentStatus === 'FAILED' || b.paymentStatus === 'PENDING') && b.expiredAt)
     if (!hasExpiring) return
     const interval = setInterval(() => setTick(t => t + 1), 1000)
     return () => clearInterval(interval)
@@ -367,7 +367,7 @@ export default function MyBookings() {
 
                     {(booking.status === 'PENDING_PAYMENT' || booking.status === 'PENDING' || booking.paymentStatus === 'FAILED') && (
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                        {booking.paymentStatus === 'FAILED' && getCountdown(booking.expiredAt) && (
+                        {(booking.paymentStatus === 'FAILED' || booking.paymentStatus === 'PENDING') && getCountdown(booking.expiredAt) && (
                           <button
                             disabled={retryLoading === booking.id}
                             onClick={(event) => {
@@ -385,12 +385,12 @@ export default function MyBookings() {
                             onMouseOver={(e) => { if (retryLoading !== booking.id) e.currentTarget.style.background = 'rgba(59,130,246,0.25)' }}
                             onMouseOut={(e) => e.currentTarget.style.background = 'rgba(59,130,246,0.15)'}
                           >
-                            {retryLoading === booking.id ? 'Đang xử lý...' : `Thanh toán lại (${getCountdown(booking.expiredAt)})`}
+                            {retryLoading === booking.id ? 'Đang xử lý...' : `${booking.paymentStatus === 'FAILED' ? 'Thanh toán lại' : 'Tiếp tục thanh toán'} (${getCountdown(booking.expiredAt)})`}
                           </button>
                         )}
-                        {booking.paymentStatus === 'FAILED' && !getCountdown(booking.expiredAt) && (
+                        {(booking.paymentStatus === 'FAILED' || booking.paymentStatus === 'PENDING') && !getCountdown(booking.expiredAt) && (
                           <span style={{ color: '#94a3b8', fontSize: '0.72rem', fontStyle: 'italic' }}>
-                            Hết thời gian thanh toán lại
+                            Hết thời gian thanh toán
                           </span>
                         )}
                         <button
