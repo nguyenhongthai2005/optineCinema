@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SeatLockScheduler {
 
-    private static final int LOCK_MINUTES = 10;
+    private static final int LOCK_MINUTES = 2;
 
     private final ShowtimeSeatRepository seatRepository;
     private final BookingRepository      bookingRepository;
