@@ -119,10 +119,13 @@ public class PaymentController {
             vnp_Params.put("vnp_OrderType", "other");
             vnp_Params.put("vnp_Locale", "vn");
             vnp_Params.put("vnp_ReturnUrl", vnp_ReturnUrl);
-            vnp_Params.put("vnp_IpAddr", "127.0.0.1");
+            String vnp_IpAddr = VNPayConfig.getIpAddress(request);
+            vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
-            Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+            TimeZone timeZone = TimeZone.getTimeZone("Asia/Ho_Chi_Minh");
+            Calendar cld = Calendar.getInstance(timeZone);
             SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+            formatter.setTimeZone(timeZone);
             String vnp_CreateDate = formatter.format(cld.getTime());
             vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
             
