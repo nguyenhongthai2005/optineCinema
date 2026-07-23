@@ -208,7 +208,7 @@ public class VietQrConfirmationService {
                     || seat.getLockedBy() == null
                     || !seat.getLockedBy().equals(ownerId)
                     || seat.getLockedAt() == null
-                    || seat.getLockedAt().plusMinutes(10).isBefore(now)) {
+                    || seat.getLockedAt().plusMinutes(2).isBefore(now)) {
                 expireBooking(booking);
                 throw new ConflictException("Đơn đặt vé đã hết hạn thanh toán.");
             }

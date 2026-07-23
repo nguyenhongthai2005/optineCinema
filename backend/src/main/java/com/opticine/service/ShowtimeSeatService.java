@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ShowtimeSeatService {
 
-    private static final int LOCK_MINUTES = 10;
+    private static final int LOCK_MINUTES = 2;
 
     private final ShowtimeSeatRepository showtimeSeatRepository;
     private final ShowtimeRepository     showtimeRepository;

@@ -270,7 +270,7 @@ public class PaymentController {
         }
         // Giữ booking PENDING_PAYMENT, đánh dấu thanh toán thất bại, cho 5 phút retry
         booking.setPaymentStatus("FAILED");
-        booking.setExpiredAt(LocalDateTime.now().plusMinutes(5));
+        booking.setExpiredAt(LocalDateTime.now().plusMinutes(2));
         bookingRepository.save(booking);
 
         // Unlock Seats (để người khác có thể đặt)

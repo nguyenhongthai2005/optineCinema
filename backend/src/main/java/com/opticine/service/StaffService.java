@@ -273,7 +273,7 @@ public class StaffService {
         booking.setShowtime(showtime);
         booking.setSeats(new HashSet<>(seats));
         booking.setCreatedAt(LocalDateTime.now());
-        booking.setExpiredAt(LocalDateTime.now().plusMinutes(10));
+        booking.setExpiredAt(LocalDateTime.now().plusMinutes(2));
         booking.setPaymentMethod(paymentMethod);
         booking.setPaymentReference("VIETQR".equals(paymentMethod) ? null : "CASH-" + System.currentTimeMillis());
         booking.setStatus("VIETQR".equals(paymentMethod) ? "WAITING_CONFIRMATION" : "CONFIRMED");
@@ -553,7 +553,7 @@ public class StaffService {
             if (!"LOCKED".equals(seat.getStatus()) || seat.getLockedBy() == null || !seat.getLockedBy().equals(staffId)) {
                 throw new IllegalArgumentException("Ghế phải được nhân viên hiện tại giữ trước khi bán: " + seatLabel(seat));
             }
-            if (seat.getLockedAt() == null || seat.getLockedAt().plusMinutes(10).isBefore(now)) {
+            if (seat.getLockedAt() == null || seat.getLockedAt().plusMinutes(2).isBefore(now)) {
                 throw new IllegalArgumentException("Ghế đã hết thời gian giữ: " + seatLabel(seat));
             }
         }

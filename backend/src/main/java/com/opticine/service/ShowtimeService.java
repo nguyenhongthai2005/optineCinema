@@ -99,7 +99,7 @@ public class ShowtimeService {
                             .statusLabel(statusLabel(effectiveStatus))
                             .maintenance(maintenance)
                             .lockedByCurrentUser(lockedByCurrentUser)
-                            .lockExpiresAt(ss.getLockedAt() != null ? ss.getLockedAt().plusMinutes(10) : null)
+                            .lockExpiresAt(ss.getLockedAt() != null ? ss.getLockedAt().plusMinutes(2) : null)
                             .pairedSeatId(ss.getSeat().getPairedSeat() != null
                                     ? ss.getSeat().getPairedSeat().getId() : null)
                             .build();

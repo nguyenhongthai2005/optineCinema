@@ -92,7 +92,7 @@ public class BookingService {
             if (seat.getLockedBy() == null || !seat.getLockedBy().equals(userId)) {
                 throw new ConflictException("Ghế đang được giữ bởi người khác: " + formatSeat(seat));
             }
-            if (seat.getLockedAt() == null || seat.getLockedAt().plusMinutes(10).isBefore(now)) {
+            if (seat.getLockedAt() == null || seat.getLockedAt().plusMinutes(2).isBefore(now)) {
                 throw new ConflictException("Thời gian giữ ghế đã hết: " + formatSeat(seat));
             }
         }
@@ -104,9 +104,9 @@ public class BookingService {
         booking.setPaymentStatus("PENDING");
         booking.setCreatedAt(now);
         booking.setExpiredAt(seats.stream()
-                .map(seat -> seat.getLockedAt().plusMinutes(10))
+                .map(seat -> seat.getLockedAt().plusMinutes(2))
                 .min(LocalDateTime::compareTo)
-                .orElse(now.plusMinutes(10)));
+                .orElse(now.plusMinutes(2)));
         
         Set<ShowtimeSeat> seatSet = new HashSet<>(seats);
         booking.setSeats(seatSet);
@@ -159,7 +159,7 @@ public class BookingService {
             }
             if ("LOCKED".equals(seat.getStatus())
                     && seat.getLockedAt() != null
-                    && seat.getLockedAt().plusMinutes(10).isBefore(now)) {
+                    && seat.getLockedAt().plusMinutes(2).isBefore(now)) {
                 throw new ConflictException("Đơn đặt vé đã hết hạn thanh toán.");
             }
         }

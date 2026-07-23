@@ -221,7 +221,7 @@ public class BookingController {
 
         // Reset payment status
         booking.setPaymentStatus("PENDING");
-        booking.setExpiredAt(now.plusMinutes(10));
+        booking.setExpiredAt(now.plusMinutes(2));
         bookingRepository.save(booking);
 
         // Broadcast seat locked
