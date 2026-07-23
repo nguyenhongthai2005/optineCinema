@@ -12,7 +12,17 @@ export default function MyBookings() {
   const [tickets, setTickets] = useState([])
   const [ticketLoading, setTicketLoading] = useState(false)
   const [emailMessage, setEmailMessage] = useState('')
+  const [retryLoading, setRetryLoading] = useState(null)
+  const [, setTick] = useState(0)
   const navigate = useNavigate()
+
+  // Countdown timer - refresh mỗi giây
+  useEffect(() => {
+    const hasExpiring = bookings.some(b => b.paymentStatus === 'FAILED' && b.expiredAt)
+    if (!hasExpiring) return
+    const interval = setInterval(() => setTick(t => t + 1), 1000)
+    return () => clearInterval(interval)
+  }, [bookings])
 
   useEffect(() => {
     fetchBookings()
@@ -81,6 +91,39 @@ export default function MyBookings() {
     } catch (err) {
       alert(err.response?.data?.message || err.response?.data || 'Không thể hủy đơn hàng.')
     }
+  }
+
+  const retryPayment = async (bookingId) => {
+    setRetryLoading(bookingId)
+    try {
+      const res = await axios.put(`${API_BASE_URL}/bookings/${bookingId}/retry-payment`, {}, {
+        headers: authHeader()
+      })
+      const { paymentMethod } = res.data
+      if (paymentMethod === 'VIETQR') {
+        navigate(`/payment/vietqr?bookingId=${bookingId}`)
+      } else {
+        // VNPAY - tạo URL thanh toán mới
+        const vnpayRes = await axios.get(`${API_BASE_URL}/payment/vnpay/create-url?bookingId=${bookingId}`, {
+          headers: authHeader()
+        })
+        window.location.href = vnpayRes.data.paymentUrl
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || err.response?.data || 'Không thể thanh toán lại.')
+      fetchBookings()
+    } finally {
+      setRetryLoading(null)
+    }
+  }
+
+  const getCountdown = (expiredAt) => {
+    if (!expiredAt) return null
+    const diff = new Date(expiredAt).getTime() - Date.now()
+    if (diff <= 0) return null
+    const mins = Math.floor(diff / 60000)
+    const secs = Math.floor((diff % 60000) / 1000)
+    return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
   const formatTime = (dateString) => {
@@ -323,7 +366,33 @@ export default function MyBookings() {
                     )}
 
                     {(booking.status === 'PENDING_PAYMENT' || booking.status === 'PENDING' || booking.paymentStatus === 'FAILED') && (
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        {booking.paymentStatus === 'FAILED' && getCountdown(booking.expiredAt) && (
+                          <button
+                            disabled={retryLoading === booking.id}
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              retryPayment(booking.id)
+                            }}
+                            style={{
+                              background: 'rgba(59,130,246,0.15)', color: '#60a5fa',
+                              border: '1px solid rgba(59,130,246,0.3)', borderRadius: '0.5rem',
+                              padding: '0.45rem 0.65rem', fontSize: '0.72rem',
+                              cursor: retryLoading === booking.id ? 'wait' : 'pointer',
+                              transition: 'all 0.2s', fontWeight: 600,
+                              opacity: retryLoading === booking.id ? 0.6 : 1,
+                            }}
+                            onMouseOver={(e) => { if (retryLoading !== booking.id) e.currentTarget.style.background = 'rgba(59,130,246,0.25)' }}
+                            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(59,130,246,0.15)'}
+                          >
+                            {retryLoading === booking.id ? 'Đang xử lý...' : `Thanh toán lại (${getCountdown(booking.expiredAt)})`}
+                          </button>
+                        )}
+                        {booking.paymentStatus === 'FAILED' && !getCountdown(booking.expiredAt) && (
+                          <span style={{ color: '#94a3b8', fontSize: '0.72rem', fontStyle: 'italic' }}>
+                            Hết thời gian thanh toán lại
+                          </span>
+                        )}
                         <button
                           onClick={(event) => {
                             event.stopPropagation()

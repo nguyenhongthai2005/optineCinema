@@ -193,6 +193,7 @@ public class BookingService {
             res.setPaymentStatus(booking.getPaymentStatus());
             res.setPaymentReference(booking.getPaymentReference());
             res.setCreatedAt(booking.getCreatedAt());
+            res.setExpiredAt(booking.getExpiredAt());
             res.setSeatCount(booking.getSeats() != null ? booking.getSeats().size() : 0);
 
             Showtime showtime = booking.getShowtime();

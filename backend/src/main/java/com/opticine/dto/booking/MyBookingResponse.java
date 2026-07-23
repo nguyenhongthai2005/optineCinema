@@ -31,5 +31,6 @@ public class MyBookingResponse {
     private String paymentStatus;
     private String paymentReference;
     private LocalDateTime createdAt;
+    private LocalDateTime expiredAt;
     private int seatCount;
 }

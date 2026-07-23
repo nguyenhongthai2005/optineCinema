@@ -171,4 +171,77 @@ public class BookingController {
 
         return ResponseEntity.ok("Đã hủy đơn đặt vé thành công.");
     }
+
+    @PutMapping("/{id}/retry-payment")
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<?> retryPayment(@PathVariable Long id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn đặt vé."));
+
+        // Kiểm tra quyền sở hữu
+        if (booking.getCustomer() == null || booking.getCustomer().getUser() == null
+                || !booking.getCustomer().getUser().getId().equals(userDetails.getId())) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN,
+                    "Bạn không có quyền thanh toán đơn đặt vé này.");
+        }
+
+        // Chỉ cho retry khi: status = PENDING_PAYMENT và paymentStatus = FAILED hoặc PENDING
+        boolean canRetry = "PENDING_PAYMENT".equals(booking.getStatus())
+                && ("FAILED".equals(booking.getPaymentStatus()) || "PENDING".equals(booking.getPaymentStatus()));
+        if (!canRetry) {
+            throw new ConflictException("Đơn đặt vé không ở trạng thái có thể thanh toán lại.");
+        }
+
+        // Kiểm tra hết hạn
+        if (booking.getExpiredAt() != null && booking.getExpiredAt().isBefore(java.time.LocalDateTime.now())) {
+            booking.setStatus("CANCELLED");
+            booking.setPaymentStatus("CANCELLED");
+            bookingRepository.save(booking);
+            throw new ConflictException("Đơn đặt vé đã hết thời gian thanh toán lại.");
+        }
+
+        // Re-lock ghế
+        java.util.Set<com.opticine.entity.ShowtimeSeat> seats = booking.getSeats();
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        for (com.opticine.entity.ShowtimeSeat seat : seats) {
+            if ("BOOKED".equals(seat.getStatus())) {
+                throw new ConflictException("Ghế đã được người khác đặt. Vui lòng tạo đơn mới.");
+            }
+            if ("LOCKED".equals(seat.getStatus()) && seat.getLockedBy() != null
+                    && !seat.getLockedBy().equals(booking.getId())) {
+                throw new ConflictException("Ghế đang được giữ bởi người khác. Vui lòng thử lại sau.");
+            }
+            seat.setStatus("LOCKED");
+            seat.setLockedBy(booking.getId());
+            seat.setLockedAt(now);
+        }
+        showtimeSeatRepository.saveAll(seats);
+
+        // Reset payment status
+        booking.setPaymentStatus("PENDING");
+        booking.setExpiredAt(now.plusMinutes(10));
+        bookingRepository.save(booking);
+
+        // Broadcast seat locked
+        try {
+            seatEventPublisher.publish(booking.getShowtime().getId(),
+                    com.opticine.dto.showtime.response.SeatEventDto.builder()
+                            .type(com.opticine.dto.showtime.response.SeatEventDto.Type.SEAT_HELD)
+                            .showtimeId(booking.getShowtime().getId())
+                            .seatIds(seats.stream().map(s -> s.getSeat().getId()).toList())
+                            .byUserId(userDetails.getId())
+                            .build());
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(BookingController.class)
+                    .warn("Failed to broadcast seat lock for booking {}: {}", id, e.getMessage());
+        }
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("bookingId", booking.getId());
+        response.put("paymentMethod", booking.getPaymentMethod());
+        response.put("message", "Đã khôi phục đơn đặt vé. Vui lòng thanh toán.");
+        return ResponseEntity.ok(response);
+    }
 }

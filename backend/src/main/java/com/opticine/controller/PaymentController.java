@@ -268,10 +268,12 @@ public class PaymentController {
         if ("CANCELLED".equals(booking.getStatus())) {
             return; // Da xu ly truoc do
         }
-        booking.setStatus("CANCELLED");
+        // Giữ booking PENDING_PAYMENT, đánh dấu thanh toán thất bại, cho 5 phút retry
+        booking.setPaymentStatus("FAILED");
+        booking.setExpiredAt(LocalDateTime.now().plusMinutes(5));
         bookingRepository.save(booking);
 
-        // Unlock Seats
+        // Unlock Seats (để người khác có thể đặt)
         for (ShowtimeSeat sts : booking.getSeats()) {
             if (!"BOOKED".equals(sts.getStatus())) {
                 sts.setStatus("AVAILABLE");
