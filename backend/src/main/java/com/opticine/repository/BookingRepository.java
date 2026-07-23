@@ -16,6 +16,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
+    List<Booking> findByStatusAndExpiredAtBefore(String status, LocalDateTime cutoff);
     List<Booking> findByCustomerUserIdOrderByCreatedAtDesc(Long userId);
     List<Booking> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
     Long countByCustomerId(Long customerId);
@@ -83,3 +84,4 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             """)
     List<Booking> findReportBookings(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }
+

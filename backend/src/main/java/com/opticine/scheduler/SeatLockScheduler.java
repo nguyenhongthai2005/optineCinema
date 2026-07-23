@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.opticine.entity.Booking;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +67,17 @@ public class SeatLockScheduler {
                     .byUserId(null) // null = system/scheduler
                     .build());
         });
+
+        // Hủy các Booking chưa thanh toán
+        List<Booking> expiredBookings = bookingRepository.findByStatusAndExpiredAtBefore("PENDING_PAYMENT", LocalDateTime.now());
+        if (!expiredBookings.isEmpty()) {
+            expiredBookings.forEach(b -> {
+                b.setStatus("CANCELLED");
+                b.setPaymentStatus("CANCELLED");
+            });
+            bookingRepository.saveAll(expiredBookings);
+            log.info("[SeatLockScheduler] Auto-cancelled {} expired booking(s)", expiredBookings.size());
+        }
 
         log.info("[SeatLockScheduler] Released {} expired seat(s) across {} showtime(s)",
                 expired.size(), byShowtime.size());

@@ -70,6 +70,19 @@ export default function MyBookings() {
     }
   }
 
+  const cancelBooking = async (bookingId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')) return;
+    try {
+      await axios.put(`${API_BASE_URL}/bookings/${bookingId}/cancel`, {}, {
+        headers: authHeader()
+      })
+      alert('Đã hủy đơn hàng thành công!')
+      fetchBookings()
+    } catch (err) {
+      alert(err.response?.data?.message || err.response?.data || 'Không thể hủy đơn hàng.')
+    }
+  }
+
   const formatTime = (dateString) => {
     if (!dateString) return 'N/A'
     const date = new Date(dateString)
@@ -307,6 +320,23 @@ export default function MyBookings() {
                         </div>
                       </div>
                     )}
+
+                    {(booking.status === 'PENDING_PAYMENT' || booking.status === 'PENDING') && (
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <button
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            cancelBooking(booking.id)
+                          }}
+                          style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.5rem', padding: '0.45rem 0.65rem', fontSize: '0.72rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                          onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.2)'}
+                          onMouseOut={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'}
+                        >
+                          Hủy đơn hàng
+                        </button>
+                      </div>
+                    )}
+
                   </div>
                 </div>
 

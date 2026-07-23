@@ -1,0 +1,44 @@
+﻿    @PutMapping("/{id}/cancel")
+    public ResponseEntity<?> cancelBooking(@PathVariable Long id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn đặt vé."));
+
+        if (booking.getCustomer() == null || booking.getCustomer().getUser() == null || !booking.getCustomer().getUser().getId().equals(userDetails.getId())) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Bạn không có quyền hủy đơn đặt vé này.");
+        }
+
+        if (!"PENDING_PAYMENT".equals(booking.getStatus()) && !"PENDING".equals(booking.getPaymentStatus())) {
+            throw new ConflictException("Chỉ có thể hủy đơn đặt vé đang chờ thanh toán.");
+        }
+
+        booking.setStatus("CANCELLED");
+        booking.setPaymentStatus("CANCELLED");
+        bookingRepository.save(booking);
+
+        // Free seats
+        java.util.List<com.opticine.entity.ShowtimeSeat> seats = booking.getSeats();
+        seats.forEach(seat -> {
+            if ("LOCKED".equals(seat.getStatus()) && booking.getId().equals(seat.getLockedBy())) {
+                seat.setStatus("AVAILABLE");
+                seat.setLockedAt(null);
+                seat.setLockedBy(null);
+            }
+        });
+        showtimeSeatRepository.saveAll(seats);
+
+        // Broadcast
+        com.opticine.service.SeatEventPublisher publisher = org.springframework.web.context.support.WebApplicationContextUtils.getRequiredWebApplicationContext(
+                ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest().getServletContext()
+        ).getBean(com.opticine.service.SeatEventPublisher.class);
+
+        publisher.publish(booking.getShowtime().getId(), com.opticine.dto.showtime.response.SeatEventDto.builder()
+                .type(com.opticine.dto.showtime.response.SeatEventDto.Type.SEAT_RELEASED)
+                .showtimeId(booking.getShowtime().getId())
+                .seatIds(seats.stream().map(s -> s.getSeat().getId()).toList())
+                .byUserId(userDetails.getId())
+                .build());
+
+        return ResponseEntity.ok("Đã hủy đơn đặt vé thành công.");
+    }
