@@ -114,7 +114,7 @@ public class PaymentController {
             vnp_Params.put("vnp_TmnCode", vnp_TmnCode.trim());
             vnp_Params.put("vnp_Amount", String.valueOf(amount));
             vnp_Params.put("vnp_CurrCode", "VND");
-            vnp_Params.put("vnp_TxnRef", bookingId.toString() + "_" + System.currentTimeMillis());
+            vnp_Params.put("vnp_TxnRef", bookingId.toString() + "T" + System.currentTimeMillis());
             vnp_Params.put("vnp_OrderInfo", "ThanhToanDonHang" + bookingId);
             vnp_Params.put("vnp_OrderType", "other");
             vnp_Params.put("vnp_Locale", "vn");
@@ -159,6 +159,13 @@ public class PaymentController {
             String vnp_SecureHash = VNPayConfig.hmacSHA512(vnp_HashSecret.trim(), hashDataStr);
             queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
             String paymentUrl = vnp_PayUrl + "?" + queryUrl;
+
+            log.info("--- VNPAY DEBUG INFO ---");
+            log.info("vnp_Params: {}", vnp_Params);
+            log.info("queryUrl: {}", queryUrl);
+            log.info("vnp_SecureHash: {}", vnp_SecureHash);
+            log.info("paymentUrl: {}", paymentUrl);
+            log.info("------------------------");
 
             Map<String, String> response = new HashMap<>();
             booking.setPaymentMethod("VNPAY");
@@ -303,7 +310,7 @@ public class PaymentController {
             String signValue = buildSignature(fields);
             
             String txnRef = request.getParameter("vnp_TxnRef");
-            Long bookingId = Long.parseLong(txnRef.split("_")[0]);
+            Long bookingId = Long.parseLong(txnRef.split("T")[0]);
 
             if (signValue.equals(vnp_SecureHash)) {
                 Booking booking = bookingRepository.findById(bookingId)
@@ -351,7 +358,7 @@ public class PaymentController {
             }
 
             String txnRef = request.getParameter("vnp_TxnRef");
-            Long bookingId = Long.parseLong(txnRef.split("_")[0]);
+            Long bookingId = Long.parseLong(txnRef.split("T")[0]);
 
             Booking booking = bookingRepository.findById(bookingId).orElse(null);
             if (booking == null) {

@@ -40,8 +40,17 @@ public class VNPayConfig {
         String ipAddress;
         try {
             ipAddress = request.getHeader("X-FORWARDED-FOR");
-            if (ipAddress == null) {
+            if (ipAddress == null || ipAddress.isEmpty()) {
                 ipAddress = request.getRemoteAddr();
+            } else {
+                ipAddress = ipAddress.split(",")[0].trim();
+            }
+            if (ipAddress != null && ipAddress.length() > 15) {
+                if (ipAddress.contains(":")) {
+                    ipAddress = "127.0.0.1"; // fallback for IPv6
+                } else {
+                    ipAddress = ipAddress.substring(0, 15);
+                }
             }
         } catch (Exception e) {
             ipAddress = "Invalid IP:" + e.getMessage();
