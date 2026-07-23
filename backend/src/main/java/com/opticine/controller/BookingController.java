@@ -104,6 +104,9 @@ public class BookingController {
     @Autowired
     private com.opticine.repository.ShowtimeSeatRepository showtimeSeatRepository;
 
+    @Autowired
+    private com.opticine.service.SeatEventPublisher seatEventPublisher;
+
     @GetMapping("/reset-test-seats")
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> resetTestSeats() {
@@ -118,6 +121,7 @@ public class BookingController {
     }
 
     @PutMapping("/{id}/cancel")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> cancelBooking(@PathVariable Long id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -128,8 +132,12 @@ public class BookingController {
             throw new ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Bạn không có quyền hủy đơn đặt vé này.");
         }
 
-        if (!"PENDING_PAYMENT".equals(booking.getStatus()) && !"PENDING".equals(booking.getPaymentStatus())) {
-            throw new ConflictException("Chỉ có thể hủy đơn đặt vé đang chờ thanh toán.");
+        // Cho phép huỷ khi: status = PENDING_PAYMENT hoặc paymentStatus = PENDING hoặc paymentStatus = FAILED
+        boolean canCancel = "PENDING_PAYMENT".equals(booking.getStatus())
+                || "PENDING".equals(booking.getPaymentStatus())
+                || "FAILED".equals(booking.getPaymentStatus());
+        if (!canCancel) {
+            throw new ConflictException("Chỉ có thể hủy đơn đặt vé đang chờ thanh toán hoặc thanh toán thất bại.");
         }
 
         booking.setStatus("CANCELLED");
@@ -147,17 +155,19 @@ public class BookingController {
         });
         showtimeSeatRepository.saveAll(seats);
 
-        // Broadcast
-        com.opticine.service.SeatEventPublisher publisher = org.springframework.web.context.support.WebApplicationContextUtils.getRequiredWebApplicationContext(
-                ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest().getServletContext()
-        ).getBean(com.opticine.service.SeatEventPublisher.class);
-
-        publisher.publish(booking.getShowtime().getId(), com.opticine.dto.showtime.response.SeatEventDto.builder()
-                .type(com.opticine.dto.showtime.response.SeatEventDto.Type.SEAT_RELEASED)
-                .showtimeId(booking.getShowtime().getId())
-                .seatIds(seats.stream().map(s -> s.getSeat().getId()).toList())
-                .byUserId(userDetails.getId())
-                .build());
+        // Broadcast seat release via WebSocket
+        try {
+            seatEventPublisher.publish(booking.getShowtime().getId(), com.opticine.dto.showtime.response.SeatEventDto.builder()
+                    .type(com.opticine.dto.showtime.response.SeatEventDto.Type.SEAT_RELEASED)
+                    .showtimeId(booking.getShowtime().getId())
+                    .seatIds(seats.stream().map(s -> s.getSeat().getId()).toList())
+                    .byUserId(userDetails.getId())
+                    .build());
+        } catch (Exception e) {
+            // WebSocket broadcast failure should not prevent cancellation
+            org.slf4j.LoggerFactory.getLogger(BookingController.class)
+                    .warn("Failed to broadcast seat release for booking {}: {}", id, e.getMessage());
+        }
 
         return ResponseEntity.ok("Đã hủy đơn đặt vé thành công.");
     }

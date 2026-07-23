@@ -104,6 +104,7 @@ export default function MyBookings() {
       PENDING_PAYMENT: { bg: 'rgba(234,179,8,0.15)', color: '#eab308', text: 'Chờ thanh toán' },
       WAITING_CONFIRMATION: { bg: 'rgba(59,130,246,0.15)', color: '#60a5fa', text: 'Chờ xác nhận' },
       CANCELLED: { bg: 'rgba(239,68,68,0.15)', color: '#ef4444', text: 'Đã hủy' },
+      FAILED: { bg: 'rgba(239,68,68,0.15)', color: '#f97316', text: 'Thanh toán thất bại' },
     }
     const s = styles[status] || { bg: 'rgba(148,163,184,0.15)', color: '#94a3b8', text: status }
     return (
@@ -227,7 +228,7 @@ export default function MyBookings() {
                         <span style={{ color: '#e2e8f0', fontWeight: 700, fontSize: '1rem' }}>
                           #{booking.id}
                         </span>
-                        {getStatusBadge(booking.status)}
+                        {getStatusBadge(booking.paymentStatus === 'FAILED' ? 'FAILED' : booking.status)}
                         {booking.paymentMethod && (
                           <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 700 }}>
                             {booking.paymentMethod}
@@ -321,7 +322,7 @@ export default function MyBookings() {
                       </div>
                     )}
 
-                    {(booking.status === 'PENDING_PAYMENT' || booking.status === 'PENDING') && (
+                    {(booking.status === 'PENDING_PAYMENT' || booking.status === 'PENDING' || booking.paymentStatus === 'FAILED') && (
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         <button
                           onClick={(event) => {
