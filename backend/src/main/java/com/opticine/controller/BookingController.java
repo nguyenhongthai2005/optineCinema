@@ -147,7 +147,7 @@ public class BookingController {
         // Free seats
         java.util.Set<com.opticine.entity.ShowtimeSeat> seats = booking.getSeats();
         seats.forEach(seat -> {
-            if ("LOCKED".equals(seat.getStatus()) && booking.getId().equals(seat.getLockedBy())) {
+            if ("LOCKED".equals(seat.getStatus()) && userDetails.getId().equals(seat.getLockedBy())) {
                 seat.setStatus("AVAILABLE");
                 seat.setLockedAt(null);
                 seat.setLockedBy(null);
@@ -210,11 +210,11 @@ public class BookingController {
                 throw new ConflictException("Ghế đã được người khác đặt. Vui lòng tạo đơn mới.");
             }
             if ("LOCKED".equals(seat.getStatus()) && seat.getLockedBy() != null
-                    && !seat.getLockedBy().equals(booking.getId())) {
+                    && !seat.getLockedBy().equals(userDetails.getId())) {
                 throw new ConflictException("Ghế đang được giữ bởi người khác. Vui lòng thử lại sau.");
             }
             seat.setStatus("LOCKED");
-            seat.setLockedBy(booking.getId());
+            seat.setLockedBy(userDetails.getId());
             seat.setLockedAt(now);
         }
         showtimeSeatRepository.saveAll(seats);
