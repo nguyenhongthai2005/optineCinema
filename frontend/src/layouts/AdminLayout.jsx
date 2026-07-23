@@ -1,5 +1,5 @@
   import { useContext } from 'react'
-  import { NavLink, Outlet } from 'react-router-dom'
+  import { NavLink, Outlet, useNavigate } from 'react-router-dom'
   import { AuthContext } from '../context/AuthContext'
 
   const NAV_ITEMS = [
@@ -21,7 +21,14 @@
   ]
 
   export default function AdminLayout() {
-    const { user } = useContext(AuthContext)
+    const { user, logout } = useContext(AuthContext)
+    const navigate = useNavigate()
+
+    const doLogout = () => {
+      logout()
+      navigate('/login', { replace: true })
+    }
+
     const navItems = NAV_ITEMS.filter(item => !item.roles || item.roles.some(role => user?.roles?.includes(role)))
 
     return (
@@ -50,10 +57,10 @@
           </nav>
 
           <div className="app-sidebar-footer">
-            <NavLink to="/" className="app-nav-link">
-              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>arrow_back</span>
-              <span>Về trang chủ</span>
-            </NavLink>
+            <button onClick={doLogout} className="app-nav-link" style={{ border: 'none', background: 'none', width: '100%', textAlign: 'left' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>logout</span>
+              <span>Đăng xuất</span>
+            </button>
           </div>
         </aside>
 
